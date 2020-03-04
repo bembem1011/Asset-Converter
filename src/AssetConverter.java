@@ -16,10 +16,11 @@ public class AssetConverter {
     final static String PNG_DRAWABLE_FOLDER = System.getProperty("user.dir") + File.separator + "asset/src/main/res/drawable-xxxhdpi";
 
     final static String PNG_EXTENSION = ".png";
-    final static String NINE_PATH_PNG_EXTENSION = ".png";
+    final static String NINE_PATH_PNG_EXTENSION = "9.png";
 
     final static int COPY_MISSING_FILE_TO_RESOURCE = 1;
     final static int RENAME_AND_COPY_TO_DRAWABLE = 2;
+    final static int COPY_NINE_PATCH_TO_DRAWABLE = 21;
     final static int COPY_MISSING_SVG_BY_PNG = 3;
     final static int PRINT_MISSING_FILE = 4;
 
@@ -56,6 +57,10 @@ public class AssetConverter {
 
         System.out.println("\nCurrent Missing Files");
         iterateFile(rootFile, PRINT_MISSING_FILE);
+
+        // Nine patch file
+        System.out.println("\nStart Copy 9 Patch PNG Files to Tmp folder");
+        iterateFile(rootFile, COPY_NINE_PATCH_TO_DRAWABLE);
 
         // Copy missing file to tmp converter folder
         System.out.println("\nStart Copy SVG Files to Tmp folder");
@@ -142,6 +147,12 @@ public class AssetConverter {
                             if (!fileNew.exists()) fileNew.mkdirs();
                             renameAndCopyToDrawable(f);
                             break;
+
+                        case COPY_NINE_PATCH_TO_DRAWABLE:
+                            File fileNinePatch = new File(DRAWABLE_FOLDER);
+                            if (!fileNinePatch.exists()) fileNinePatch.mkdirs();
+                            copyNinePatchToDrawable(f);
+                            break;
                         case COPY_MISSING_SVG_BY_PNG:
                             File filePng = new File(PNG_DRAWABLE_FOLDER);
                             if (!filePng.exists()) filePng.mkdirs();
@@ -196,9 +207,31 @@ public class AssetConverter {
     }
 
     /**
-     * RENAME_AND_COPY_TO_DRAWABLE
+     * Copy 9 patch file to drawable xxxhdpi
      *
-     * @param file
+     * @param file to copy
+     */
+    public static void copyNinePatchToDrawable(File file) {
+        if (!file.exists()) return;
+        if (!file.getName().contains(NINE_PATH_PNG_EXTENSION)) return;
+        if (!file.getParent().contains("xxxhdpi")) return;
+        if (isExistInDrawable(file) && !FORCE_COPY) return;
+
+        String newName = file.getName();
+        File fileNew = new File(PNG_DRAWABLE_FOLDER + File.separator + newName);
+        if (file.length() != fileNew.length()) {
+            System.out.println(fileNew.getName());
+        }
+
+        try {
+            Files.copy(file.toPath(), fileNew.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * RENAME_AND_COPY_TO_DRAWABLE
      */
     public static void renameAndCopyToDrawable(File file) {
         try {
@@ -328,7 +361,7 @@ public class AssetConverter {
 
 
     public static String getSimpleNameWithoutExtension(String name) {
-        int childExtIndex = name.lastIndexOf(".");
+        int childExtIndex = name.indexOf(".");
         if (childExtIndex == -1) return name;
         return name.substring(0, childExtIndex).toLowerCase();
     }
