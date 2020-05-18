@@ -8,6 +8,7 @@ public class AssetConverter {
 
 
     final static String SVG_EXTENSION = ".svg";
+    final static String JSON_EXTENSION = ".json";
     final static String XML_EXTENSION = ".xml";
     final static String WEBP_EXTENSION = ".webp";
 
@@ -21,6 +22,7 @@ public class AssetConverter {
     final static int COPY_NINE_PATCH_TO_DRAWABLE = 21;
     final static int COPY_MISSING_SVG_BY_PNG = 3;
     final static int PRINT_MISSING_FILE = 4;
+    final static int COPY_JSON_FILE_TO_RAW = 5;
 
     final static String RESOURCE_FOLDER = System.getProperty("user.dir") + File.separator + "App_Asset";
 
@@ -58,6 +60,9 @@ public class AssetConverter {
         // Clear and Init Folder
         DrawableFilePath.removeFolder();
         DrawableFilePath.createFolder();
+
+        System.out.println("\nCopy json to raw");
+        iterateFile(rootFile, COPY_JSON_FILE_TO_RAW);
 
         System.out.println("\nCurrent Missing Files");
         iterateFile(rootFile, PRINT_MISSING_FILE);
@@ -169,9 +174,26 @@ public class AssetConverter {
                         case PRINT_MISSING_FILE:
                             printAllMissingFile(f);
                             break;
+                        case COPY_JSON_FILE_TO_RAW:
+                            copyJsonToRaw(f);
+                            break;
                     }
                 }
             }
+        }
+    }
+
+    private static void copyJsonToRaw(File file) {
+        if (!file.exists()) return;
+        if (!file.getName().contains(JSON_EXTENSION)) return;
+        System.out.println(file.getName());
+
+        try {
+            File fileDes = DrawableFilePath.getJsonDestinationFile(file);
+            if (!fileDes.exists()) fileDes.createNewFile();
+            Files.copy(file.toPath(), fileDes.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -454,6 +476,8 @@ public class AssetConverter {
         final static String PNG_DRAWABLE_FOLDER_XXHDPI = System.getProperty("user.dir") + File.separator + "asset/src/main/res/drawable-xxhdpi";
         final static String PNG_DRAWABLE_FOLDER_XXXHDPI = System.getProperty("user.dir") + File.separator + "asset/src/main/res/drawable-xxxhdpi";
 
+        final static String JSON_DRAWABLE_FOLDER = System.getProperty("user.dir") + File.separator + "asset/src/main/res/raw";
+
         String prefix;
         File converterFolder;
         File drawableFolder;
@@ -513,6 +537,8 @@ public class AssetConverter {
                 Runtime.getRuntime().exec("rm -rf " + PNG_DRAWABLE_FOLDER_XHDPI).waitFor();
                 Runtime.getRuntime().exec("rm -rf " + PNG_DRAWABLE_FOLDER_HDPI).waitFor();
 
+                Runtime.getRuntime().exec("rm -rf " + JSON_DRAWABLE_FOLDER).waitFor();
+
             } catch (InterruptedException | IOException e) {
                 e.printStackTrace();
             }
@@ -535,6 +561,8 @@ public class AssetConverter {
                 Runtime.getRuntime().exec("mkdir " + PNG_CONVERT_RESULT_FOLDER_PATH_XXHDPI).waitFor();
                 Runtime.getRuntime().exec("mkdir " + PNG_CONVERT_RESULT_FOLDER_PATH_XHDPI).waitFor();
                 Runtime.getRuntime().exec("mkdir " + PNG_CONVERT_RESULT_FOLDER_PATH_HDPI).waitFor();
+
+                Runtime.getRuntime().exec("mkdir " + JSON_DRAWABLE_FOLDER).waitFor();
             } catch (InterruptedException | IOException e) {
                 e.printStackTrace();
             }
@@ -542,6 +570,10 @@ public class AssetConverter {
 
         public static File getSvgConverterFolder(File file) {
             return new File(SVG_CONVERT_RESULT_FOLDER_PATH + File.separator + file.getName().toLowerCase());
+        }
+
+        public static File getJsonDestinationFile(File file) {
+            return new File(JSON_DRAWABLE_FOLDER + File.separator + file.getName().toLowerCase());
         }
 
         public static String getSimpleNameWithoutExtension(String name) {
