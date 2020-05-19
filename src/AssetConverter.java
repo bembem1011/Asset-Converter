@@ -536,9 +536,6 @@ public class AssetConverter {
                 Runtime.getRuntime().exec("rm -rf " + PNG_DRAWABLE_FOLDER_XXHDPI).waitFor();
                 Runtime.getRuntime().exec("rm -rf " + PNG_DRAWABLE_FOLDER_XHDPI).waitFor();
                 Runtime.getRuntime().exec("rm -rf " + PNG_DRAWABLE_FOLDER_HDPI).waitFor();
-
-                Runtime.getRuntime().exec("rm -rf " + JSON_DRAWABLE_FOLDER).waitFor();
-
             } catch (InterruptedException | IOException e) {
                 e.printStackTrace();
             }
