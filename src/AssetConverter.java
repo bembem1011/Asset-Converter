@@ -440,6 +440,10 @@ public class AssetConverter {
             while ((st = br.readLine()) != null) {
                 if (!st.contains(ALPHA_TEXT)) {
                     pr.println(st);
+                } else {
+                    if (st.contains("/>")) {
+                        pr.println("      />");
+                    }
                 }
             }
             br.close();
