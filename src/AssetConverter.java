@@ -19,6 +19,7 @@ public class AssetConverter {
 
     final static int COPY_MISSING_FILE_TO_RESOURCE = 1;
     final static int RENAME_AND_COPY_TO_DRAWABLE = 2;
+    final static int RENAME_AND_COPY_TO_DRAWABLE_NO_LIMIT_SIZE = 22;
     final static int COPY_NINE_PATCH_TO_DRAWABLE = 21;
     final static int COPY_MISSING_SVG_BY_PNG = 3;
     final static int PRINT_MISSING_FILE = 4;
@@ -28,7 +29,7 @@ public class AssetConverter {
 
     static DrawableFilePath[] drawableFolders = DrawableFilePath.createDrawableFilePaths();
 
-    static int MAX_XML_FILE_SIZE = 20;
+    static int MAX_XML_FILE_SIZE = 10;
 
     public static void main(String[] args) {
         String resourceFolder = RESOURCE_FOLDER;
@@ -91,6 +92,10 @@ public class AssetConverter {
         System.out.println("\nPNG, Webp Change files:");
         convertPngToWebp();
         compareWebpThenCopyToDrawable();
+
+        // 5 Copy Missing SVG File
+        System.out.println("\nXML Change files:");
+        iterateFile(svgConverter, RENAME_AND_COPY_TO_DRAWABLE_NO_LIMIT_SIZE);
 
         System.out.println("\nFiles Can not copy to drawable:");
         iterateFile(rootFile, PRINT_MISSING_FILE);
@@ -162,9 +167,11 @@ public class AssetConverter {
                             copyMissingSvgToConvertFolder(f);
                             break;
                         case RENAME_AND_COPY_TO_DRAWABLE:
-                            renameAndCopyXmlToDrawable(f);
+                            renameAndCopyXmlToDrawable(f, MAX_XML_FILE_SIZE);
                             break;
-
+                        case RENAME_AND_COPY_TO_DRAWABLE_NO_LIMIT_SIZE:
+                            renameAndCopyXmlToDrawable(f, Integer.MAX_VALUE);
+                            break;
                         case COPY_NINE_PATCH_TO_DRAWABLE:
                             copyNinePatchToDrawable(f);
                             break;
@@ -257,13 +264,13 @@ public class AssetConverter {
     /**
      * RENAME_AND_COPY_TO_DRAWABLE xml to drawable
      */
-    public static void renameAndCopyXmlToDrawable(File file) {
+    public static void renameAndCopyXmlToDrawable(File file, int limitSize) {
         try {
             if (!file.exists()) return;
             if (!file.getName().contains(SVG_SUFFIX)) return;
             if (!file.getName().contains(XML_EXTENSION)) return;
             if (isNotValidXmlFile(file)) return;
-            if (file.length() / 1024 >= MAX_XML_FILE_SIZE) return;
+            if (file.length() / 1024 >= limitSize) return;
             if (isExistInNinePatch(file)) return;
 
             removeAlpha(file);
