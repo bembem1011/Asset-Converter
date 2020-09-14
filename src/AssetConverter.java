@@ -15,6 +15,7 @@ public class AssetConverter {
     final static String PATH = "<path";
 
     final static String PNG_EXTENSION = ".png";
+    final static String JPG_EXTENSION = ".jpg";
     final static String NINE_PATH_PNG_EXTENSION = "9.png";
 
     final static int COPY_MISSING_FILE_TO_RESOURCE = 1;
@@ -22,6 +23,7 @@ public class AssetConverter {
     final static int RENAME_AND_COPY_TO_DRAWABLE_NO_LIMIT_SIZE = 22;
     final static int COPY_NINE_PATCH_TO_DRAWABLE = 21;
     final static int COPY_MISSING_SVG_BY_PNG = 3;
+    final static int COPY_MISSING_JPG = 31;
     final static int PRINT_MISSING_FILE = 4;
     final static int COPY_JSON_FILE_TO_RAW = 5;
 
@@ -96,6 +98,10 @@ public class AssetConverter {
         // 5 Copy Missing SVG File
         System.out.println("\nXML Change files:");
         iterateFile(svgConverter, RENAME_AND_COPY_TO_DRAWABLE_NO_LIMIT_SIZE);
+
+        // 6 Copy JPG file
+        System.out.println("\nStart Copy JPG Files");
+        iterateFile(rootFile, COPY_MISSING_JPG);
 
         System.out.println("\nFiles Can not copy to drawable:");
         iterateFile(rootFile, PRINT_MISSING_FILE);
@@ -177,6 +183,9 @@ public class AssetConverter {
                             break;
                         case COPY_MISSING_SVG_BY_PNG:
                             copyMissingPngToConvertFolder(f);
+                            break;
+                        case COPY_MISSING_JPG:
+                            copyJPGToDrawable(f);
                             break;
                         case PRINT_MISSING_FILE:
                             printAllMissingFile(f);
@@ -313,6 +322,25 @@ public class AssetConverter {
             System.out.println(e.getMessage());
         }
         return !containPath;
+    }
+
+    public static void copyJPGToDrawable(File file) {
+        if (!file.exists()) return;
+        if (!file.getName().contains(JPG_EXTENSION)) return;
+        if (!DrawableFilePath.isValidPng(file)) return;
+        if (isExistInVectorDrawable(file)) return;
+        if (isExistInNinePatch(file)) return;
+
+        String des = DrawableFilePath.getDrawableFile(file);
+        if (des == null) System.out.println("File is invalid: " + file.getAbsolutePath());
+
+        try {
+            File fileDes = new File(des);
+            if (!fileDes.exists()) fileDes.createNewFile();
+            Files.copy(file.toPath(), fileDes.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
