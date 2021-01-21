@@ -1,6 +1,8 @@
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
+import java.util.List;
 
 public class AssetConverter {
 
@@ -9,8 +11,12 @@ public class AssetConverter {
 
     final static String SVG_EXTENSION = ".svg";
     final static String JSON_EXTENSION = ".json";
+    final static String MP3_EXTENSION = ".mp3";
+    final static String M4A_EXTENSION = ".m4a";
     final static String XML_EXTENSION = ".xml";
     final static String WEBP_EXTENSION = ".webp";
+
+    final static List<String> musicExtension = Arrays.asList(MP3_EXTENSION, M4A_EXTENSION);
 
     final static String PATH = "<path";
 
@@ -26,6 +32,7 @@ public class AssetConverter {
     final static int COPY_MISSING_JPG = 31;
     final static int PRINT_MISSING_FILE = 4;
     final static int COPY_JSON_FILE_TO_RAW = 5;
+    final static int COPY_MUSIC_FILE_TO_RAW = 6;
 
     final static String RESOURCE_FOLDER = System.getProperty("user.dir") + File.separator + "App_Asset";
 
@@ -66,6 +73,9 @@ public class AssetConverter {
 
         System.out.println("\nCopy json to raw");
         iterateFile(rootFile, COPY_JSON_FILE_TO_RAW);
+
+        System.out.println("\nCopy music to raw");
+        iterateFile(rootFile, COPY_MUSIC_FILE_TO_RAW);
 
         System.out.println("\nCurrent Missing Files");
         iterateFile(rootFile, PRINT_MISSING_FILE);
@@ -142,6 +152,13 @@ public class AssetConverter {
         return false;
     }
 
+    public static boolean isExistInRaw(File file) {
+        File childExistFile = new File(DrawableFilePath.MUSIC_DRAWABLE_FOLDER);
+        if (childExistFile.list() == null) return false;
+        if (containFileWithName(childExistFile.list(), file.getName())) return true;
+        return false;
+    }
+
     public static boolean isExistInNinePatch(File file) {
         for (DrawableFilePath drawableFilePath : drawableFolders) {
             File childExistFile = drawableFilePath.drawableFolder;
@@ -193,14 +210,32 @@ public class AssetConverter {
                         case COPY_JSON_FILE_TO_RAW:
                             copyJsonToRaw(f);
                             break;
+                        case COPY_MUSIC_FILE_TO_RAW:
+                            copyMusicFileToRaw(f);
+                            break;
                     }
                 }
             }
         }
     }
 
+    private static void copyMusicFileToRaw(File file) {
+        if (!isValidFile(file)) return;
+        if (!musicExtension.contains(DrawableFilePath.getExtension(file.getName()))) return;
+        System.out.println(file.getName());
+        if (isExistInRaw(file)) return;
+
+        try {
+            File fileDes = DrawableFilePath.getMusicDestinationFile(file);
+            if (!fileDes.exists()) fileDes.createNewFile();
+            Files.copy(file.toPath(), fileDes.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private static void copyJsonToRaw(File file) {
-        if (!file.exists()) return;
+        if (!isValidFile(file)) return;
         if (!file.getName().contains(JSON_EXTENSION)) return;
         System.out.println(file.getName());
 
@@ -230,7 +265,7 @@ public class AssetConverter {
      * COPY_MISSING_FILE_TO_RESOURCE
      */
     public static void copyMissingSvgToConvertFolder(File file) {
-        if (!file.exists()) return;
+        if (!isValidFile(file)) return;
         if (!file.getName().contains(SVG_EXTENSION)) return;
         if (isExistInNinePatch(file)) return;
 
@@ -249,7 +284,7 @@ public class AssetConverter {
      * @param file to copy
      */
     public static void copyNinePatchToDrawable(File file) {
-        if (!file.exists()) return;
+        if (!isValidFile(file)) return;
         if (!file.getName().contains(NINE_PATH_PNG_EXTENSION)) return;
         if (!DrawableFilePath.isValidPng(file)) return;
         if (isExistInVectorDrawable(file)) return;
@@ -275,7 +310,7 @@ public class AssetConverter {
      */
     public static void renameAndCopyXmlToDrawable(File file, int limitSize) {
         try {
-            if (!file.exists()) return;
+            if (!isValidFile(file)) return;
             if (!file.getName().contains(SVG_SUFFIX)) return;
             if (!file.getName().contains(XML_EXTENSION)) return;
             if (isNotValidXmlFile(file)) return;
@@ -325,7 +360,7 @@ public class AssetConverter {
     }
 
     public static void copyJPGToDrawable(File file) {
-        if (!file.exists()) return;
+        if (!isValidFile(file)) return;
         if (!file.getName().contains(JPG_EXTENSION)) return;
         if (!DrawableFilePath.isValidPng(file)) return;
         if (isExistInVectorDrawable(file)) return;
@@ -347,7 +382,7 @@ public class AssetConverter {
      * PNG_WEBP
      */
     public static void copyMissingPngToConvertFolder(File file) {
-        if (!file.exists()) return;
+        if (!isValidFile(file)) return;
         if (!file.getName().contains(PNG_EXTENSION)) return;
         if (!DrawableFilePath.isValidPng(file)) return;
         if (isExistInVectorDrawable(file)) return;
@@ -494,6 +529,13 @@ public class AssetConverter {
         }
     }
 
+    public static boolean isValidFile(File file) {
+        if (!file.exists()) return false;
+        if (file.isDirectory()) return false;
+        if (file.getName().contains(" ")) return false;
+        return true;
+    }
+
     /**
      * Manage resources folders
      */
@@ -516,6 +558,7 @@ public class AssetConverter {
         final static String PNG_DRAWABLE_FOLDER_XXXHDPI = System.getProperty("user.dir") + File.separator + "asset/src/main/res/drawable-xxxhdpi";
 
         final static String JSON_DRAWABLE_FOLDER = System.getProperty("user.dir") + File.separator + "asset/src/main/res/raw";
+        final static String MUSIC_DRAWABLE_FOLDER = System.getProperty("user.dir") + File.separator + "asset/src/main/res/raw";
 
         String prefix;
         File converterFolder;
@@ -575,6 +618,8 @@ public class AssetConverter {
                 Runtime.getRuntime().exec("rm -rf " + PNG_DRAWABLE_FOLDER_XXHDPI).waitFor();
                 Runtime.getRuntime().exec("rm -rf " + PNG_DRAWABLE_FOLDER_XHDPI).waitFor();
                 Runtime.getRuntime().exec("rm -rf " + PNG_DRAWABLE_FOLDER_HDPI).waitFor();
+
+//                 Runtime.getRuntime().exec("rm -rf " + JSON_DRAWABLE_FOLDER).waitFor();
             } catch (InterruptedException | IOException e) {
                 e.printStackTrace();
             }
@@ -612,10 +657,20 @@ public class AssetConverter {
             return new File(JSON_DRAWABLE_FOLDER + File.separator + file.getName().toLowerCase());
         }
 
+        public static File getMusicDestinationFile(File file) {
+            return new File(MUSIC_DRAWABLE_FOLDER + File.separator + file.getName().toLowerCase());
+        }
+
         public static String getSimpleNameWithoutExtension(String name) {
             int childExtIndex = name.indexOf(".");
             if (childExtIndex == -1) return name;
             return name.substring(0, childExtIndex).toLowerCase();
+        }
+
+        public static String getExtension(String fileName) {
+            int childExtIndex = fileName.indexOf(".");
+            if (childExtIndex == -1) return "";
+            return fileName.substring(childExtIndex).toLowerCase();
         }
 
         public static boolean isValidPng(File file) {
